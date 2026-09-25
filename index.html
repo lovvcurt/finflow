@@ -7,6 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="FinFlow">
+  <link rel="apple-touch-icon" sizes="180x180" href="finflow-icon-180.png">
+  <link rel="icon" type="image/png" sizes="180x180" href="finflow-icon-180.png">
   
   <script>
     // Initialize tailwind config safely
@@ -527,7 +529,7 @@
     <div class="glass-card bg-slate-900 border-t sm:border border-slate-700 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
       
       <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white">Новая операция</h3>
+        <h3 class="text-base font-bold text-white" id="tx-modal-title">Новая операция</h3>
         <button onclick="closeModal('modal-add-tx')" class="p-1 rounded-full text-slate-400 hover:text-white">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
         </button>
@@ -551,6 +553,9 @@
           <label class="text-xs text-slate-400 font-semibold mb-2 block">Категория</label>
           <div id="tx-category-grid" class="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-48 overflow-y-auto p-1">
           </div>
+          <button type="button" onclick="openCategoryManager()" class="w-full py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-bold text-blue-400 transition">
+            ＋ Создать свою категорию
+          </button>
           <input type="hidden" id="tx-category" required>
         </div>
 
@@ -564,9 +569,14 @@
           <input type="text" id="tx-note" placeholder="Например: Покупки в Супермаркете" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none">
         </div>
 
-        <button type="submit" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 active:scale-98 transition">
-          Сохранить операцию
-        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button type="submit" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 active:scale-98 transition">
+            Сохранить операцию
+          </button>
+          <button type="button" id="tx-delete-btn" onclick="deleteEditingTransaction()" class="hidden w-full py-3.5 rounded-2xl bg-rose-500/10 hover:bg-rose-500/20 border border-rose-500/20 text-rose-400 font-bold text-sm transition">
+            Удалить
+          </button>
+        </div>
       </form>
 
     </div>
@@ -696,6 +706,61 @@
     </div>
   </div>
 
+  <!-- MODAL 5: Category Manager -->
+  <div id="modal-categories" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center hidden opacity-0 transition-opacity duration-300">
+    <div class="glass-card bg-slate-900 border-t sm:border border-slate-700 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <div>
+          <h3 class="text-base font-bold text-white">Мои категории</h3>
+          <p class="text-[11px] text-slate-400 mt-0.5">Создавайте свои категории и выбирайте иконку</p>
+        </div>
+        <button onclick="closeModal('modal-categories')" class="p-1 rounded-full text-slate-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <form id="form-category" onsubmit="saveCategory(event)" class="space-y-4">
+        <input type="hidden" id="category-edit-id" value="">
+        <div>
+          <label class="text-xs text-slate-400 font-semibold mb-1 block">Название</label>
+          <input type="text" id="category-name" required maxlength="32" placeholder="Например: Кофе" class="w-full bg-slate-950 border border-slate-800 rounded-2xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div>
+          <label class="text-xs text-slate-400 font-semibold mb-2 block">Тип</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="category-type-expense" onclick="setCategoryType('expense')" class="py-2 rounded-xl text-xs font-bold bg-rose-600 text-white transition">Расход</button>
+            <button type="button" id="category-type-income" onclick="setCategoryType('income')" class="py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition">Доход</button>
+          </div>          <input type="hidden" id="category-form-type" value="expense">
+        </div>
+
+        <div>
+          <label class="text-xs text-slate-400 font-semibold mb-2 block">Иконка</label>
+          <div id="category-icon-grid" class="grid grid-cols-6 gap-2 max-h-40 overflow-y-auto p-1"></div>
+          <input type="hidden" id="category-icon" value="wallet">
+        </div>
+
+        <div>
+          <label class="text-xs text-slate-400 font-semibold mb-2 block">Цвет</label>
+          <div id="category-color-grid" class="flex flex-wrap gap-2"></div>
+          <input type="hidden" id="category-color-index" value="0">
+        </div>
+
+        <button type="submit" class="w-full py-3.5 rounded-2xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm shadow-lg shadow-blue-600/30 transition">
+          Сохранить категорию
+        </button>
+      </form>
+
+      <div class="pt-2 border-t border-slate-800">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Созданные вами</h4>
+          <button type="button" onclick="resetCategoryForm()" class="text-[11px] font-bold text-blue-400">+ Новая</button>
+        </div>
+        <div id="custom-category-list" class="space-y-2"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- MODAL 5: Settings -->
   <div id="modal-settings" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center hidden opacity-0 transition-opacity duration-300">
     <div class="glass-card bg-slate-900 border-t sm:border border-slate-700 w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-5 space-y-5 max-h-[90vh] overflow-y-auto no-scrollbar">
@@ -745,6 +810,20 @@
         </div>
       </div>
 
+      <!-- Custom Categories -->
+      <div class="rounded-2xl p-4 bg-slate-950 border border-slate-800 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-sm font-bold text-white">Мои категории</h4>
+            <p class="text-xs text-slate-400 mt-0.5">Свои названия, типы, цвета и иконки</p>
+          </div>
+          <button onclick="openCategoryManager()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-blue-400 border border-slate-700 transition">
+            Управлять
+          </button>
+        </div>
+        <div id="settings-custom-category-preview" class="flex flex-wrap gap-2"></div>
+      </div>
+
       <!-- Backup & Data Management -->
       <div class="rounded-2xl p-4 bg-slate-950 border border-slate-800 space-y-4">
         <div>
@@ -780,7 +859,7 @@
     // =========================================================================
     // CATEGORY MASTER DEFINITIONS
     // =========================================================================
-    const CATEGORIES = {
+    let CATEGORIES = {
       food: { id: 'food', name: 'Еда и продукты', type: 'expense', color: '#10B981', bgColor: 'rgba(16, 185, 129, 0.15)', svg: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>` },
       restaurants: { id: 'restaurants', name: 'Рестораны и кафе', type: 'expense', color: '#F59E0B', bgColor: 'rgba(245, 158, 11, 0.15)', svg: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>` },
       transport: { id: 'transport', name: 'Транспорт и авто', type: 'expense', color: '#3B82F6', bgColor: 'rgba(59, 130, 246, 0.15)', svg: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h8m-8 4h8m-9 8h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>` },
@@ -798,6 +877,65 @@
       gifts: { id: 'gifts', name: 'Подарки и бонусы', type: 'income', color: '#F59E0B', bgColor: 'rgba(245, 158, 11, 0.15)', svg: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V6a2 2 0 10-2 2h2zm0 13C10.832 19.477 9.246 19 7.5 19S4.168 19.477 3 20.253V7.253C4.168 6.477 5.754 6 7.5 6s3.332.477 4.5 1.253m0 13C13.168 19.477 14.754 19 16.5 19c1.747 0 3.332.477 4.5 1.253V7.253C19.832 6.477 18.247 6 16.5 6c-1.746 0-3.332.477-4.5 1.253"/></svg>` }
     };
 
+    // User-selectable icon library for custom categories.
+    const CATEGORY_ICONS = {
+      wallet: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7a2 2 0 012-2h14a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V7zm0 2h18m-5 4h3"/></svg>`,
+      cart: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13l-2 2.3c-.6.6-.2 1.7.7 1.7H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>`,
+      coffee: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 10h13v5a4 4 0 01-4 4H8a4 4 0 01-4-4v-5zm13 1h2a2 2 0 010 4h-2M7 5c0 2 2 2 0 4m5-4c0 2 2 2 0 4"/></svg>`,
+      car: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 17h14l1-5-2-4H6L4 12l1 5zm0 0v2m14-2v2M7 13h.01M17 13h.01"/></svg>`,
+      home: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 11l9-8 9 8m-2-1v10H5V10"/></svg>`,
+      phone: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 2h4l2 5-3 2a16 16 0 007 7l2-3 5 2v4a2 2 0 01-2 2C10 21 3 14 3 5a2 2 0 013-3z"/></svg>`,
+      heart: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.8 4.6a5.5 5.5 0 00-7.8 0L12 5.6l-1-1a5.5 5.5 0 00-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 000-7.8z"/></svg>`,
+      game: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 9h12a4 4 0 014 4v3a3 3 0 01-5 2l-2-2H9l-2 2a3 3 0 01-5-2v-3a4 4 0 014-4zm3 2v4m-2-2h4m6-1h.01M17 14h.01"/></svg>`,
+      music: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18V5l10-2v13M9 18a3 3 0 11-3-3 3 3 0 003 3zm10-2a3 3 0 11-3-3 3 3 0 003 3z"/></svg>`,
+      plane: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.5 14.5L3 12l-1-2 9.5 1.5L14 3l2 1-1 8.5L22 11l1 2-8 3.5V21l-2 1-1.5-5.5L5 18l-1-2 6.5-1.5z"/></svg>`,
+      gift: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12v9H4v-9m18-4H2v4h20V8zM12 8v13M12 8H8.5a2.5 2.5 0 110-5C11 3 12 8 12 8zm0 0h3.5a2.5 2.5 0 100-5C13 3 12 8 12 8z"/></svg>`,
+      book: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5V5a2 2 0 012-2h14v16H6.5A2.5 2.5 0 004 21.5"/></svg>`,
+      gym: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 4v16m12-16v16M3 8h18M3 16h18M1 10v4m22-4v4"/></svg>`,
+      pet: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11c-2 0-3-2-2-4s3-2 4 0c1-2 3-2 4 0 1-2 3-2 4 0s0 4-2 4c2 1 3 3 2 5-1 2-3 2-5 1-2 1-4 1-5-1-1-2 0-4 2-5z"/></svg>`,
+      work: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16a2 2 0 012 2v9H2V9a2 2 0 012-2zm4 0V5h8v2M2 13h20"/></svg>`,
+      savings: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h12a4 4 0 014 4v5a3 3 0 01-3 3H6a3 3 0 01-3-3V8a1 1 0 011-1zm14 4h3v4h-3M8 12h4"/></svg>`,
+      other: `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01"/></svg>`
+    };
+
+    const CATEGORY_COLORS = [
+      { color: '#3B82F6', bgColor: 'rgba(59,130,246,.15)' },
+      { color: '#8B5CF6', bgColor: 'rgba(139,92,246,.15)' },
+      { color: '#EC4899', bgColor: 'rgba(236,72,153,.15)' },
+      { color: '#10B981', bgColor: 'rgba(16,185,129,.15)' },
+      { color: '#F59E0B', bgColor: 'rgba(245,158,11,.15)' },
+      { color: '#EF4444', bgColor: 'rgba(239,68,68,.15)' },
+      { color: '#06B6D4', bgColor: 'rgba(6,182,212,.15)' },
+      { color: '#84CC16', bgColor: 'rgba(132,204,22,.15)' }
+    ];
+
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, ch => ({
+      '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#039;'
+    }[ch]));
+
+    function getCategoryIcon(iconKey, fallbackSvg = '') {
+      return CATEGORY_ICONS[iconKey] || fallbackSvg || CATEGORY_ICONS.other;
+    }
+
+    function rebuildCustomCategories() {
+      const custom = Array.isArray(appState.categories) ? appState.categories : [];
+      Object.keys(custom.reduce((acc, c) => { acc[c.id] = true; return acc; }, {})).forEach(id => {
+        if (!['food','restaurants','transport','housing','entertainment','health','shopping','telecom','subscriptions','education','salary','freelance','investments','gifts'].includes(id)) delete CATEGORIES[id];
+      });
+      custom.forEach(c => {
+        if (!c || !c.id || !c.name) return;
+        CATEGORIES[c.id] = {
+          id: c.id,
+          name: c.name,
+          type: c.type === 'income' ? 'income' : 'expense',
+          color: c.color || CATEGORY_COLORS[0].color,
+          bgColor: c.bgColor || CATEGORY_COLORS[0].bgColor,
+          iconKey: c.iconKey || 'other',
+          svg: getCategoryIcon(c.iconKey || 'other')
+        };
+      });
+    }
+
     const DEFAULT_BUDGETS = { food: 28000, restaurants: 12000, transport: 8000, housing: 22000, entertainment: 10000, health: 6000, shopping: 15000, telecom: 2000, subscriptions: 5000, education: 5000 };
 
     let appState = {
@@ -810,6 +948,7 @@
       lastNotifiedTimestamp: 0,
       notificationsMode: 'off', // 'off' | 'native' | 'demo'
       debts: [],
+      categories: [],
       debtFilter: 'all'
     };
 
@@ -854,6 +993,9 @@
       if (!state.budgets) state.budgets = { ...DEFAULT_BUDGETS };
       if (!state.notificationsMode) state.notificationsMode = 'off';
       if (!Array.isArray(state.debts)) state.debts = [];
+      if (!Array.isArray(state.categories)) state.categories = [];
+      appState = state;
+      rebuildCustomCategories();
       if (!state.debtFilter) state.debtFilter = 'all';
       if (!state.currentTab) state.currentTab = 'dashboard';
       if (state.activeTxModalType === undefined) state.activeTxModalType = 'expense';
@@ -1165,16 +1307,19 @@
         const item = document.createElement('div');
         item.className = 'glass-card p-3 rounded-2xl flex items-center justify-between';
         item.innerHTML = `
-          <div class="flex items-center space-x-3">
+          <button type="button" onclick="openTransactionEdit('${tx.id}')" class="flex items-center space-x-3 min-w-0 flex-1 text-left">
             <div class="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style="background-color: ${cat.bgColor}; color: ${cat.color}">
               ${cat.svg}
             </div>
-            <div>
-              <p class="text-xs font-bold text-white">${tx.note || cat.name}</p>
-              <p class="text-[10px] text-slate-400 font-medium">${cat.name} • ${formatDateRu(tx.date)}</p>
+            <div class="min-w-0">
+              <p class="text-xs font-bold text-white truncate">${escapeHtml(tx.note || cat.name)}</p>
+              <p class="text-[10px] text-slate-400 font-medium truncate">${escapeHtml(cat.name)} • ${formatDateRu(tx.date)}</p>
             </div>
-          </div>
-          <span class="text-sm font-extrabold ${isExp ? 'text-rose-400' : 'text-emerald-400'}">
+          </button>
+          <button type="button" onclick="openTransactionEdit('${tx.id}')" class="p-2 rounded-xl text-slate-500 hover:text-blue-400">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M12 20h9"/><path fill="none" stroke="currentColor" stroke-width="2" d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4 11.5-11.5z"/></svg>
+          </button>
+          <span class="text-sm font-extrabold ${isExp ? 'text-rose-400' : 'text-emerald-400'} whitespace-nowrap">
             ${isExp ? '-' : '+'}${formatRub(tx.amount)}
           </span>
         `;
@@ -1234,14 +1379,15 @@
       const catVal = document.getElementById('tx-category-select').value;
 
       const catSelect = document.getElementById('tx-category-select');
-      if (catSelect.options.length <= 1) {
-        Object.values(CATEGORIES).forEach(c => {
-          const opt = document.createElement('option');
-          opt.value = c.id;
-          opt.textContent = c.name;
-          catSelect.appendChild(opt);
-        });
-      }
+      const currentCat = catSelect.value || 'ALL';
+      catSelect.innerHTML = '<option value="ALL">Все категории</option>';
+      Object.values(CATEGORIES).forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c.id;
+        opt.textContent = c.name;
+        catSelect.appendChild(opt);
+      });
+      catSelect.value = CATEGORIES[currentCat] ? currentCat : 'ALL';
 
       const filtered = appState.transactions.filter(tx => {
         const matchesType = appState.txFilterType === 'all' || tx.type === appState.txFilterType;
@@ -1286,21 +1432,21 @@
           const card = document.createElement('div');
           card.className = 'glass-card p-3.5 rounded-2xl flex items-center justify-between border border-slate-800/80 hover:bg-slate-800/50 transition';
           card.innerHTML = `
-            <div class="flex items-center space-x-3.5">
+            <button type="button" onclick="openTransactionEdit('${tx.id}')" class="flex items-center space-x-3.5 min-w-0 flex-1 text-left">
               <div class="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0" style="background-color: ${cat.bgColor}; color: ${cat.color}">
                 ${cat.svg}
               </div>
-              <div>
-                <p class="text-xs font-bold text-white">${tx.note || cat.name}</p>
-                <p class="text-[10px] text-slate-400">${cat.name}</p>
+              <div class="min-w-0">
+                <p class="text-xs font-bold text-white truncate">${escapeHtml(tx.note || cat.name)}</p>
+                <p class="text-[10px] text-slate-400 truncate">${escapeHtml(cat.name)}</p>
               </div>
-            </div>
-            <div class="flex items-center space-x-3">
-              <span class="text-sm font-extrabold ${isExp ? 'text-rose-400' : 'text-emerald-400'}">
+            </button>
+            <div class="flex items-center space-x-1.5 ml-2">
+              <span class="text-sm font-extrabold ${isExp ? 'text-rose-400' : 'text-emerald-400'} whitespace-nowrap">
                 ${isExp ? '-' : '+'}${formatRub(tx.amount)}
               </span>
-              <button onclick="deleteTransaction('${tx.id}')" class="p-1.5 rounded-xl text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              <button onclick="openTransactionEdit('${tx.id}')" aria-label="Редактировать" class="p-1.5 rounded-xl text-slate-500 hover:text-blue-400 hover:bg-blue-500/10 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" d="M12 20h9"/><path fill="none" stroke="currentColor" stroke-width="2" d="M16.5 3.5a2.1 2.1 0 013 3L8 18l-4 1 1-4 11.5-11.5z"/></svg>
               </button>
             </div>
           `;
@@ -1858,15 +2004,22 @@
     // =========================================================================
     // MODALS & INPUT HANDLERS
     // =========================================================================
-    function openModal(modalId, initialType = 'expense') {
+    function openModal(modalId, initialType = 'expense', reset = true) {
       const modal = document.getElementById(modalId);
       if (!modal) return;
 
-      if (modalId === 'modal-add-tx') {
+      if (modalId === 'modal-add-tx' && reset) {
         setTxType(initialType);
+        document.getElementById('tx-id').value = '';
+        document.getElementById('tx-modal-title').textContent = 'Новая операция';
+        document.getElementById('tx-delete-btn').classList.add('hidden');
         document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
         document.getElementById('tx-amount').value = '';
         document.getElementById('tx-note').value = '';
+      }
+
+      if (modalId === 'modal-categories') {
+        renderCategoryManager();
       }
 
       if (modalId === 'modal-edit-budgets') {
@@ -1947,23 +2100,57 @@
       const amount = parseFloat(document.getElementById('tx-amount').value);
       const category = document.getElementById('tx-category').value;
       const date = document.getElementById('tx-date').value;
-      const note = document.getElementById('tx-note').value;
+      const note = document.getElementById('tx-note').value.trim();
+      const editId = document.getElementById('tx-id').value;
 
       if (!amount || amount <= 0 || !category || !date) return;
 
-      const newTx = {
-        id: 'tx-' + Date.now(),
-        type: appState.activeTxModalType,
-        amount,
-        category,
-        date,
-        note: note.trim()
-      };
+      if (editId) {
+        const tx = appState.transactions.find(t => t.id === editId);
+        if (tx) {
+          tx.type = appState.activeTxModalType;
+          tx.amount = amount;
+          tx.category = category;
+          tx.date = date;
+          tx.note = note;
+        }
+      } else {
+        appState.transactions.unshift({
+          id: 'tx-' + Date.now(),
+          type: appState.activeTxModalType,
+          amount,
+          category,
+          date,
+          note
+        });
+      }
 
-      appState.transactions.unshift(newTx);
       saveStateToLocalStorage();
       closeModal('modal-add-tx');
       switchTab(appState.currentTab);
+    }
+
+    function openTransactionEdit(id) {
+      const tx = appState.transactions.find(t => t.id === id);
+      if (!tx) return;
+
+      openModal('modal-add-tx', tx.type, false);
+      document.getElementById('tx-id').value = tx.id;
+      document.getElementById('tx-modal-title').textContent = 'Редактировать операцию';
+      document.getElementById('tx-delete-btn').classList.remove('hidden');
+      document.getElementById('tx-amount').value = tx.amount;
+      document.getElementById('tx-date').value = tx.date;
+      document.getElementById('tx-note').value = tx.note || '';
+      renderCategoryGrid(tx.type);
+      selectCategoryTile(tx.category);
+    }
+
+    function deleteEditingTransaction() {
+      const id = document.getElementById('tx-id').value;
+      if (!id) return;
+      if (!confirm('Удалить эту операцию?')) return;
+      deleteTransaction(id);
+      closeModal('modal-add-tx');
     }
 
     function deleteTransaction(id) {
@@ -1971,6 +2158,190 @@
       saveStateToLocalStorage();
       renderTransactionsTab();
       if (appState.currentTab === 'dashboard') renderDashboardTab();
+    }
+
+    function openCategoryManager(editId = '') {
+      closeModal('modal-add-tx');
+      closeModal('modal-settings');
+      resetCategoryForm();
+      if (editId) editCategory(editId);
+      openModal('modal-categories');
+    }
+
+    function setCategoryType(type) {
+      const exp = document.getElementById('category-type-expense');
+      const inc = document.getElementById('category-type-income');
+      if (type === 'income') {
+        exp.className = 'py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition';
+        inc.className = 'py-2 rounded-xl text-xs font-bold bg-emerald-600 text-white transition';
+      } else {
+        exp.className = 'py-2 rounded-xl text-xs font-bold bg-rose-600 text-white transition';
+        inc.className = 'py-2 rounded-xl text-xs font-bold text-slate-400 hover:text-white transition';
+      }
+      document.getElementById('category-form-type').value = type;
+    }
+
+    function renderCategoryIconPicker() {
+      const grid = document.getElementById('category-icon-grid');
+      grid.innerHTML = '';
+      Object.entries(CATEGORY_ICONS).forEach(([key, svg]) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'h-11 rounded-xl border border-slate-800 bg-slate-950 flex items-center justify-center text-slate-300 hover:bg-slate-800 transition';
+        btn.dataset.icon = key;
+        btn.innerHTML = svg;
+        btn.onclick = () => selectCategoryIcon(key);
+        grid.appendChild(btn);
+      });
+    }
+
+    function selectCategoryIcon(key) {
+      document.getElementById('category-icon').value = key;
+      document.querySelectorAll('#category-icon-grid button').forEach(btn => {
+        btn.classList.toggle('bg-slate-800', btn.dataset.icon === key);
+        btn.classList.toggle('border-blue-500', btn.dataset.icon === key);
+      });
+    }
+
+    function renderCategoryColorPicker() {
+      const grid = document.getElementById('category-color-grid');
+      grid.innerHTML = '';
+      CATEGORY_COLORS.forEach((c, i) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'w-8 h-8 rounded-full border-2 border-transparent transition active:scale-95';
+        btn.style.backgroundColor = c.color;
+        btn.dataset.colorIndex = i;
+        btn.onclick = () => {
+          document.getElementById('category-color-index').value = i;
+          document.querySelectorAll('#category-color-grid button').forEach(b => b.classList.toggle('border-white', Number(b.dataset.colorIndex) === i));
+        };
+        grid.appendChild(btn);
+      });
+    }
+
+    function resetCategoryForm() {
+      const name = document.getElementById('category-name');
+      if (!name) return;
+      document.getElementById('category-edit-id').value = '';
+      document.getElementById('category-form-type').value = 'expense';
+      name.value = '';
+      document.getElementById('category-icon').value = 'wallet';
+      document.getElementById('category-color-index').value = '0';
+      setCategoryType('expense');
+      renderCategoryIconPicker();
+      renderCategoryColorPicker();
+      selectCategoryIcon('wallet');
+      document.querySelectorAll('#category-color-grid button').forEach(b => b.classList.toggle('border-white', b.dataset.colorIndex === '0'));
+    }
+
+    function renderCategoryManager() {
+      renderCategoryIconPicker();
+      renderCategoryColorPicker();
+      if (!document.getElementById('category-form-type')) {
+        const hidden = document.createElement('input');
+        hidden.type = 'hidden';
+        hidden.id = 'category-form-type';
+        hidden.value = 'expense';
+        document.getElementById('form-category').appendChild(hidden);
+      }
+      if (!document.getElementById('category-edit-id').value) resetCategoryForm();
+
+      const list = document.getElementById('custom-category-list');
+      const custom = Array.isArray(appState.categories) ? appState.categories : [];
+      list.innerHTML = custom.length ? '' : '<p class="text-xs text-slate-500 text-center py-3">Пока нет пользовательских категорий</p>';
+
+      custom.forEach(c => {
+        const cat = CATEGORIES[c.id];
+        const row = document.createElement('div');
+        row.className = 'flex items-center justify-between p-2.5 rounded-2xl bg-slate-950 border border-slate-800';
+        row.innerHTML = `
+          <div class="flex items-center space-x-2.5 min-w-0">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:${cat.bgColor};color:${cat.color}">${cat.svg}</div>
+            <div class="min-w-0">
+              <p class="text-xs font-bold text-white truncate">${escapeHtml(c.name)}</p>
+              <p class="text-[10px] text-slate-500">${c.type === 'income' ? 'Доход' : 'Расход'}</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-1">
+            <button type="button" onclick="editCategory('${c.id}')" class="p-2 rounded-xl text-slate-400 hover:text-blue-400 hover:bg-blue-500/10">✎</button>
+            <button type="button" onclick="deleteCategory('${c.id}')" class="p-2 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10">×</button>
+          </div>
+        `;
+        list.appendChild(row);
+      });
+
+      const preview = document.getElementById('settings-custom-category-preview');
+      if (preview) {
+        preview.innerHTML = custom.length ? custom.map(c => `<span class="px-2.5 py-1.5 rounded-xl bg-slate-800 border border-slate-700 text-[10px] text-slate-300">${escapeHtml(c.name)}</span>`).join('') : '<span class="text-[11px] text-slate-500">Нет пользовательских категорий</span>';
+      }
+    }
+
+    function saveCategory(e) {
+      e.preventDefault();
+      const name = document.getElementById('category-name').value.trim();
+      const type = document.getElementById('category-form-type').value;
+      const iconKey = document.getElementById('category-icon').value;
+      const colorIndex = Number(document.getElementById('category-color-index').value) || 0;
+      if (!name) return;
+
+      const editId = document.getElementById('category-edit-id').value;
+      if (editId) {
+        const existing = appState.categories.find(c => c.id === editId);
+        if (existing) {
+          existing.name = name;
+          existing.type = type;
+          existing.iconKey = iconKey;
+          existing.color = CATEGORY_COLORS[colorIndex].color;
+          existing.bgColor = CATEGORY_COLORS[colorIndex].bgColor;
+        }
+      } else {
+        const id = 'custom-' + Date.now();
+        appState.categories.push({
+          id, name, type, iconKey,
+          color: CATEGORY_COLORS[colorIndex].color,
+          bgColor: CATEGORY_COLORS[colorIndex].bgColor
+        });
+      }
+
+      rebuildCustomCategories();
+      saveStateToLocalStorage();
+      renderCategoryManager();
+      renderCategoryGrid(appState.activeTxModalType);
+      renderTransactionsTab();
+      renderDashboardTab();
+    }
+
+    function editCategory(id) {
+      const c = appState.categories.find(x => x.id === id);
+      if (!c) return;
+      document.getElementById('category-edit-id').value = c.id;
+      document.getElementById('category-name').value = c.name;
+      document.getElementById('category-form-type').value = c.type;
+      document.getElementById('category-icon').value = c.iconKey || 'other';
+      const colorIndex = Math.max(0, CATEGORY_COLORS.findIndex(x => x.color === c.color));
+      document.getElementById('category-color-index').value = colorIndex;
+      setCategoryType(c.type);
+      selectCategoryIcon(c.iconKey || 'other');
+      document.querySelectorAll('#category-color-grid button').forEach(b => b.classList.toggle('border-white', Number(b.dataset.colorIndex) === colorIndex));
+      document.getElementById('category-name').focus();
+    }
+
+    function deleteCategory(id) {
+      const used = appState.transactions.some(t => t.category === id) || appState.subscriptions.some(s => s.category === id);
+      if (used) {
+        alert('Эта категория уже используется в операциях или подписках. Сначала измените их категорию.');
+        return;
+      }
+      if (!confirm('Удалить пользовательскую категорию?')) return;
+      appState.categories = appState.categories.filter(c => c.id !== id);
+      delete CATEGORIES[id];
+      delete appState.budgets[id];
+      saveStateToLocalStorage();
+      renderCategoryManager();
+      renderCategoryGrid(appState.activeTxModalType);
+      renderTransactionsTab();
+      renderDashboardTab();
     }
 
     function renderModalBudgetsInputs() {
